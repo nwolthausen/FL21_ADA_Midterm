@@ -1,0 +1,67 @@
+---
+title: "ADA FL21 Midterm"
+author: "Noah Wolthausen"
+date: "10/14/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+
+library(dplyr)
+library(tidyverse) #Load necessary packages
+
+#Upload dataset from github
+BRFSS_data <-
+  read_csv("https://raw.githubusercontent.com/kijohnson/ADA-Fall-2021/master/BRFSS2017_10percent_v.csv")
+
+#Variable for sex recoded as a factor
+BRFSS_data$sex_factor<-factor(BRFSS_data$SEX,
+                        levels = c(1,2),
+                        labels = c("Male","Female"))
+
+#Median heights for each sex category
+BRFSS_data %>%
+  group_by(sex_factor) %>%
+  summarise(median(ht_meters, na.rm = TRUE))
+
+#Boxplot of median height differences for each sex category
+ggplot(data = BRFSS_data, aes(x = sex_factor, y = ht_meters)) +
+  geom_boxplot(aes(color = sex_factor)) +
+  labs(x = "Sex", y = "Height (meters)",  title = "Differences in height by sex")
+  stat_summary(fun = median, geom = "point", shape=23, size=4, na.rm = TRUE)
+
+
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+
+testImplications <- function( covariance.matrix, sample.size ){
+	library(ggm)
+	tst <- function(i){ pcor.test( pcor(i,covariance.matrix), length(i)-2, sample.size )$pvalue }
+tos <- function(i){ paste(i,collapse=" ") }
+implications <- list(c("Age","Race"),
+		c("Age","Sex"),
+		c("Race","Sex"))
+	data.frame( implication=unlist(lapply(implications,tos)),
+		pvalue=unlist( lapply( implications, tst ) ) )
+
+
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
