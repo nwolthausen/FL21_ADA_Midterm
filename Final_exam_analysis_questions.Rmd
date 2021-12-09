@@ -1,0 +1,116 @@
+---
+title: "ADA Final exam"
+output: html_document
+---
+
+# Exercise 1.
+In this exercise, we are going to evaluate whether streptomycin improves sore throat using data from a randomized controlled trial that was published in 1948. The original paper can be accessed at https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2091872/?page=1. Please run the code below to get started.
+```{r}
+#install.packages("medicaldata")
+library(medicaldata)
+library(odds.n.ends)
+library("MASS")
+library("nnet")
+library(multcomp)
+
+#assign strep dataset in the medical data package to the environment
+strep_tb<-strep_tb #See https://higgi13425.github.io/medicaldata/
+head(strep_tb)
+
+#label radnum variable that measures improvement on a six point scale with Death being 1 and Considerable improvement being 6
+rad_numLabels <- c("Death","Considerable deterioration","Moderate or slight deterioration","No material change","Moderate or slight improvement","Considerable improvement")
+
+rad_numValues <- 1:6
+strep_tb$rad_numLabels <- rad_numLabels[match(strep_tb$rad_num,rad_numValues)]
+strep_tb$rad_numLabels <- factor(strep_tb$rad_numLabels,levels=rad_numLabels)
+table(strep_tb$rad_numLabels)
+
+#recode control as 0 and Streptomycin	 as 1
+strep_tb$arm<-ifelse(strep_tb$arm=="Control", 0, 1)
+strep_tb$arm<-factor(strep_tb$arm, levels=c(0:1), labels=c("Control", "Streptomycin"))
+table(strep_tb$arm)
+```
+
+# 9. How many males and females are in the strep_tb dataset?
+```{r}
+
+```
+
+# 10. Choose an appropriate model to model the association between arm (streptomycin vs. control) and improved (improvement vs. no improvement). a.Report the measure of association value and the 95% CI. b. Interpret the results.
+```{r}
+
+```
+
+# 11. Choose an appropriate model to model the association between arm (streptomycin vs. control) and rad_num. a. Report the measure of association and value(s) and the 95% CIs. b. Interpret the results.
+```{r}
+
+```
+
+# Exercise 2.
+This exercise will use the Framingham data to model the association between current smoking and death. The data dictionary can be found here: https://biolincc.nhlbi.nih.gov/media/teachingstudies/FHS_Teaching_Longitudinal_Data_Documentation_2021a.pdf?link_time=2021-12-02_12:02:38.620894. Please run the code below to get started.
+
+```{r}
+library(readr)
+library(survminer) 
+library(survival) 
+library(ggfortify) 
+library(lmtest)
+#import the csv file
+frm<-read_csv("frmgham2.csv")
+
+frm$cursmoke<-factor(frm$CURSMOKE, levels= c(0:1), labels = c("Not Current Smoker", "Smoker"))
+frm$sex<-factor(frm$SEX, levels=c(1:2), labels = c("Male", "Female"))
+```
+
+# 12. Determine number of individuals for variables needed for this analysis (cursmoke, sex, DEATH). Report the number of subjects who are a. current smokers, b. male, and c. who have died.
+```{r}
+
+```
+
+# 13. Determine the mean age and TIMEDTH. Report these means (a. age, b. TIMEDTH).
+```{r}
+
+```
+
+# 14. Generate a Kaplan Meier plot that shows survival probabilities for death by cursmoke. Upload a snapshot or picture of your plot.
+```{r}
+
+```
+
+# 15. Test for statistical differences between survival curves using the log rank test. Report and interpret the results.
+```{r}
+
+```
+
+# 16. Run a univariate Cox PH regression model to determine the hazard rate of DEATH in current smokers vs. non-current smokers. a. Report the HR and 95% CI and b. Interpret the results.
+```{r}
+
+```
+
+
+# 17. Run a multivariable Cox model to determine the hazard rate of DEATH in current smokers vs. non-current smokers adjusted for age. a. Report the HR and 95% CI and b. interpret the results.
+```{r}
+
+```
+
+# 18. Determine if sex modifies the association between the age-adjusted hazard rate of DEATH in current smokers vs. non-current smokers. Report the results of your statistical test and interpret the results.
+```{r}
+
+```
+
+# 19. If sex modifies the association, run age-adjusted models to report associations stratified by sex. a. Report the age-adjusted HRs and 95% CIs for each sex and b. Interpret the results.
+```{r}
+
+```
+# 20. Should the models be adjusted for sex or should sex-specific estimates be provided separately? Explain the rationale for your answer.
+
+# Of note: the linearity assumption should be evaluated by age. However for the purpose of time, we have skipped that step in this exercise as well as other assumption tests.
+
+# 21. Extra credit. Using the Cox model with the following right hand side: cursmoke + AGE + sex+ sex*cursmoke, determine the hazard rate of death in a 70 year old man who is a current smoker compared to a 80 year old man who is not a current smoker.  a. Report the HR and 95% CI. b. Interpret the results. c. How does this HR compare to the HR if they were both non-smokers?
+```{r}
+
+```
+
+
+
+
