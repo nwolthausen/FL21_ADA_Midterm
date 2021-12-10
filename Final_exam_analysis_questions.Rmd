@@ -6,7 +6,8 @@ output: html_document
 # Exercise 1.
 In this exercise, we are going to evaluate whether streptomycin improves sore throat using data from a randomized controlled trial that was published in 1948. The original paper can be accessed at https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2091872/?page=1. Please run the code below to get started.
 ```{r}
-#install.packages("medicaldata")
+install.packages("medicaldata")
+install.packages("multcomp")
 library(medicaldata)
 library(odds.n.ends)
 library("MASS")
@@ -33,16 +34,52 @@ table(strep_tb$arm)
 
 # 9. How many males and females are in the strep_tb dataset?
 ```{r}
+#looking at males and females
+table(strep_tb$gender) # There are 48 males and 59 females
 
 ```
 
 # 10. Choose an appropriate model to model the association between arm (streptomycin vs. control) and improved (improvement vs. no improvement). a.Report the measure of association value and the 95% CI. b. Interpret the results.
 ```{r}
+#Logistic regression
+library(odds.n.ends)
+
+improvedLogit <- glm(improved ~ arm, data=strep_tb, family="binomial")
+summary(improvedLogit)
+
+#calculate and print ORs and 95% CIs  
+odds.n.ends(improvedLogit)
+
+#Those taking streptomycin are 4.6 times the odds of controls of having their condition improved (95% CI 2.07, 10.63)
+
+
 
 ```
 
 # 11. Choose an appropriate model to model the association between arm (streptomycin vs. control) and rad_num. a. Report the measure of association and value(s) and the 95% CIs. b. Interpret the results.
 ```{r}
+library(nnet)
+
+mod <- multinom(rad_numLabels ~ arm, data=strep_tb)
+summary(mod)
+
+#the odds of being in considerable deterioration vs dying increased by 1.25 in those taking streptomycin compared to controls
+#the odds of being in moderate or slight deterioration vs dying increased by 0.38 in those taking streptomycin compared to controls
+#the odds of having no material change vs dying increased by 0.84 in those taking streptomycin compared to controls
+#the odds of having moderate or slight improvement vs dying increased by 0.99 in those taking streptomycin compared to controls
+#the odds of having considerable vs dying increased by 3.19 in those taking streptomycin compared to controls
+
+
+#calculate z score
+z <- summary(mod)$coefficients/summary(mod)$standard.errors
+# 2-tailed Z test
+p <- (1 - pnorm(abs(z), 0, 1))*2
+p
+
+#Get confidence intervals for the log odds using confint function
+ci <- confint(mod)
+ci
+
 
 ```
 
@@ -65,25 +102,53 @@ frm$sex<-factor(frm$SEX, levels=c(1:2), labels = c("Male", "Female"))
 # 12. Determine number of individuals for variables needed for this analysis (cursmoke, sex, DEATH). Report the number of subjects who are a. current smokers, b. male, and c. who have died.
 ```{r}
 
+table(frm$sex) #5022 males
+table(frm$cursmoke) #6598 current smokers
+table(frm$DEATH) #3527 have died
+
 ```
 
 # 13. Determine the mean age and TIMEDTH. Report these means (a. age, b. TIMEDTH).
 ```{r}
 
+mean(frm$TIMEDTH) #the mean days between baseline exam and death/censorship is 7,854
+mean(frm$AGE) #the mean age is 54.8 years
+
 ```
 
 # 14. Generate a Kaplan Meier plot that shows survival probabilities for death by cursmoke. Upload a snapshot or picture of your plot.
 ```{r}
+install.packages("survival") 
+install.packages('ggfortify') 
+install.packages("survminer") 
+library(survminer) 
+library(survival) 
+library(ggfortify)
+
+
+cursmoke.surv <- survfit(Surv(TIMEDTH, DEATH) ~ cursmoke, frm) 
+summary(cursmoke.surv) 
+
+ggsurvplot(cursmoke.surv, data = frm, risk.table = TRUE, conf.int=TRUE, tables.theme = clean_theme())
 
 ```
 
 # 15. Test for statistical differences between survival curves using the log rank test. Report and interpret the results.
 ```{r}
 
+survdiff(Surv(TIMEDTH, DEATH) ~ cursmoke, data=frm)
+#with a Chi-sq of 10 and 1 degree of freedom, there is a statistically significant different between survival curves of those who currently smoke and those who do not
 ```
 
 # 16. Run a univariate Cox PH regression model to determine the hazard rate of DEATH in current smokers vs. non-current smokers. a. Report the HR and 95% CI and b. Interpret the results.
 ```{r}
+pacman::p_load(survminer,survival,tidyverse,lmtest,foreign)
+
+HRdeath.mod<-coxph(Surv(TIMEDTH, DEATH)~cursmoke, frm, ties="efron") #using ties = Efron, default is Efron, which is fine but this is how it would be changed.
+
+summary(HRdeath.mod)
+
+#Those who are current smokers have a 1.11 (95% CI 1.04-1.19) times higher hazard of death than those who are not current smokers.
 
 ```
 
@@ -91,15 +156,30 @@ frm$sex<-factor(frm$SEX, levels=c(1:2), labels = c("Male", "Female"))
 # 17. Run a multivariable Cox model to determine the hazard rate of DEATH in current smokers vs. non-current smokers adjusted for age. a. Report the HR and 95% CI and b. interpret the results.
 ```{r}
 
+HRdeathMV.mod<-coxph(Surv(TIMEDTH, DEATH)~cursmoke +AGE, frm)
+
+summary(HRdeathMV.mod)
+
+#After adjusting for age, hose who are current smokers have a 1.58 (95% CI 1.47-1.69) times higher hazard of death than those who are not current smokers.
+
+
 ```
 
 # 18. Determine if sex modifies the association between the age-adjusted hazard rate of DEATH in current smokers vs. non-current smokers. Report the results of your statistical test and interpret the results.
 ```{r}
 
+HRdeathINT.mod<-coxph(Surv(TIMEDTH, DEATH)~cursmoke + AGE + cursmoke*sex, frm)
+
+summary(HRdeathINT.mod)
+
+#There is no significant effect modification by (p for interaction=0.483) of the age-adjusted HR for the association between current smoking status and death by sex.
+
 ```
 
 # 19. If sex modifies the association, run age-adjusted models to report associations stratified by sex. a. Report the age-adjusted HRs and 95% CIs for each sex and b. Interpret the results.
 ```{r}
+
+#sex does not modify the association
 
 ```
 # 20. Should the models be adjusted for sex or should sex-specific estimates be provided separately? Explain the rationale for your answer.
@@ -108,6 +188,10 @@ frm$sex<-factor(frm$SEX, levels=c(1:2), labels = c("Male", "Female"))
 
 # 21. Extra credit. Using the Cox model with the following right hand side: cursmoke + AGE + sex+ sex*cursmoke, determine the hazard rate of death in a 70 year old man who is a current smoker compared to a 80 year old man who is not a current smoker.  a. Report the HR and 95% CI. b. Interpret the results. c. How does this HR compare to the HR if they were both non-smokers?
 ```{r}
+
+HRdeathADJ.mod<-coxph(Surv(TIMEDTH, DEATH)~cursmoke + AGE + sex+ sex*cursmoke, frm)
+
+summary(HRdeathADJ.mod)
 
 ```
 
